@@ -4,39 +4,55 @@ using UnityEngine;
 
 public class CameraMovement {
 
-    public Transform player;
-    public Transform camera;
+    public Transform body;
+    public Transform head;
     public float sideSpeed;
     public float verticalSpeed;
+    public float maxHeadYAngle;
 
     public float pitch { get; private set; }  // X-axis 
     public float yaw { get; private set; }  // Y-axis 
+    public float bodyYaw { get; private set; }  // Y-axis 
+
     private float mouseX;
     private float mouseY;
 
-    public CameraMovement(Transform player, Transform camera) {
-        this.player = player;
-        this.camera = camera;
+    public CameraMovement(Transform body, Transform head) {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        this.body = body;
+        this.head = head;
 
         pitch = 0f;
         yaw = 0f;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        bodyYaw = 0f;
     }
 
-    public void Update(float time) {
+    public void Update(float deltaTime) {
+        GetMouseInput(deltaTime);
+        UpdateRotation();
+        ApplyRotation();
+    }
 
-        mouseX = Input.GetAxis("Mouse X") * verticalSpeed * time;
-        mouseY = Input.GetAxis("Mouse Y") * sideSpeed * time;
+    private void GetMouseInput(float deltaTime) {
+        mouseX = Input.GetAxis("Mouse X") * verticalSpeed * deltaTime;
+        mouseY = Input.GetAxis("Mouse Y") * sideSpeed * deltaTime;
+    }
+
+    private void UpdateRotation() {
+        pitch = Mathf.Clamp(pitch + mouseY, -90f, 90f);
 
         yaw += mouseX;
-        pitch += mouseY;
+        if (Mathf.Abs(yaw) >= maxHeadYAngle) {
+            bodyYaw += Mathf.Sign(yaw) * (Mathf.Abs(yaw) - maxHeadYAngle);
+            yaw = Mathf.Clamp(yaw, -maxHeadYAngle, maxHeadYAngle);
+        }
+    }
 
-        pitch = Mathf.Clamp(pitch, -90f, 90f);
-
-        player.rotation = Quaternion.Euler(0f, yaw, 0f);
-        camera.localRotation = Quaternion.Euler(-pitch, 0f, 0f);
+    private void ApplyRotation() {
+        head.localRotation = Quaternion.Euler(pitch, yaw, 0f);
+        body.rotation = Quaternion.Euler(0f, bodyYaw, 0f);
     }
     
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -10,30 +11,40 @@ public class PlayerController : MonoBehaviour {
     private Movement mvmnt;
     private CameraMovement cam;
 
+    [Header("Body Settings")]
+    [SerializeField] private Transform _head;
+    [SerializeField] private Transform _body;
+    [SerializeField] private Animator animator;
+
     [Header("Movement Settings")]
     [SerializeField] private float speed;
     [SerializeField] private float jumpSpeed;
+    [SerializeField] private float runningModifier;
 
     [Header("Camera Settings")]
-    [SerializeField] private Transform _camera;
-    [SerializeField] private float cameraSideSpeed;
-    [SerializeField] private float cameraVerticalSpeed;
+    [SerializeField] private float cameraXSpeed;
+    [SerializeField] private float cameraYSpeed;
+    [SerializeField] private float maxHeadYAngle;
 
     void Start() {
-
         controller = GetComponent<CharacterController>();
-        mvmnt = new Movement(transform, controller);
+
+        mvmnt = new Movement(_head, controller);
         mvmnt.speed = speed;
         mvmnt.jumpSpeed = jumpSpeed;
-        cam = new CameraMovement(transform, _camera);
-        cam.sideSpeed = cameraSideSpeed;
-        cam.verticalSpeed = cameraVerticalSpeed;
+        mvmnt.runningModifier = runningModifier;
+
+        cam = new CameraMovement(_body, _head);
+        cam.sideSpeed = cameraXSpeed;
+        cam.verticalSpeed = cameraYSpeed;
+        cam.maxHeadYAngle = maxHeadYAngle;
     }
 
     void Update() {
 
         mvmnt.Update(Time.deltaTime);
         cam.Update(Time.deltaTime);
+        animator.SetFloat("Velocity", mvmnt.GetXZVelocity());
     }
 
 }

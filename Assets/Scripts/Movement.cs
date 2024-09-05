@@ -4,45 +4,54 @@ using UnityEngine;
 
 public class Movement {
 
-    private static readonly float G = 9.81f;
+    private static readonly float G = 12.5f;
+    private static readonly float SLOW_G = -G/10;
 
     public CharacterController chController;
-    public Transform transform;
+    public Transform head;
     public float yVel { get; private set; }
     public Vector3 velocity { get; private set; }
     public float speed;
     public float jumpSpeed;
+    public float runningModifier;
 
-    private float xVel;
-    private float zVel;
+    private float tempSpeed;
 
-    public Movement(Transform transform, CharacterController controller) {
+    public float xVel { get; private set; }
+    public float zVel { get; private set; }
 
-        this.transform = transform;
+    public Movement(Transform head, CharacterController controller) {
+        this.head = head;
         chController = controller;
         yVel = 0;
-        velocity = new Vector3(0, 0, 0);
+        velocity = Vector3.zero;
     }
 
-    public void Update(float time) {
+    public void Update(float deltaTime) {
+        float inputX = Input.GetAxis("Horizontal");
+        float inputZ = Input.GetAxis("Vertical");
 
-        xVel = Input.GetAxis("Horizontal") * speed;
-        zVel = Input.GetAxis("Vertical") * speed;
+        xVel = -inputX * speed;
+        zVel = -inputZ * speed;
 
         if (chController.isGrounded) {
-            if (Input.GetKey(KeyCode.Space)) {
-                yVel = jumpSpeed;
-            } else {
-                yVel = -G * 0.1f;
-            }
+            yVel = Input.GetKey(KeyCode.Space) ? jumpSpeed : SLOW_G;
+            tempSpeed = speed * (Input.GetKey(KeyCode.LeftShift) ? runningModifier : 1f);
         } else {
-            xVel *= 0.8f;
-            zVel *= 0.8f;
-            yVel -= G * time;
+            yVel -= G * deltaTime;
+            tempSpeed = speed;
         }
 
-        velocity = transform.TransformDirection(new Vector3(xVel, yVel, zVel) * time);
-        chController.Move(velocity);
+        Vector2 moveTemp = new Vector2(xVel, zVel).normalized;
+        Vector3 move = new Vector3(moveTemp.x * tempSpeed, yVel, moveTemp.y * tempSpeed);
+        move = Quaternion.Euler(0f, head.eulerAngles.y, 0f) * move;
+
+        //velocity = head.TransformDirection(move) * deltaTime;
+        chController.Move(move * deltaTime);
+    }
+
+    public float GetXZVelocity() {
+        return Mathf.Sqrt(xVel*xVel + zVel*zVel);
     }
 
 }
