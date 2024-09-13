@@ -47,4 +47,7 @@ public class PlayerController : MonoBehaviour {
         animator.SetFloat("Velocity", mvmnt.GetXZVelocity());
     }
 
+    // Start, Awake
+    // Update, FixedUpdate
+
 }
